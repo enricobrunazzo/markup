@@ -1,5 +1,7 @@
-import { initializeApp } from 'firebase/app';
+// Import da CDN per window in ambiente browser
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
 
+// Definizione e inizializzazione Firebase direttamente in questo file
 const firebaseConfig = {
   apiKey: "AIzaSyD8-Z-x9zEIZJpgemwgVOhELVURjzVDoWA",
   authDomain: "markup-enr.firebaseapp.com",
@@ -11,4 +13,4 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-export default app;
+export { app, firebaseConfig };
