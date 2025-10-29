@@ -1,42 +1,47 @@
+console.log("Script caricato - verifica UI autenticazione");
+
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc } from 'firebase/firestore/lite';
+import { getFirestore, collection, doc, setDoc, getDocs, query, where } from 'firebase/firestore/lite';
 import app from './firebaseConfig';
 
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 const form = document.getElementById('calcForm');
 const marginEl = document.getElementById('margin');
 const markupEl = document.getElementById('markup');
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
 
-const marginInput = document.getElementById('marginInput');
-const markupInput = document.getElementById('markupInput');
+// log UI elements
+console.log(loginBtn, logoutBtn, form);
 
 let currentUser = null;
 
-loginBtn.addEventListener('click', () => {
+loginBtn.onclick = () => {
+  console.log('Login clicked');
   signInWithPopup(auth, provider)
-    .then((result) => {
+    .then(result => {
       currentUser = result.user;
       updateUI();
       loadUserData();
     })
-    .catch((error) => {
-      console.error('Login error:', error);
-    });
-});
+    .catch(console.error);
+};
 
-logoutBtn.addEventListener('click', () => {
-  signOut(auth).then(() => {
-    currentUser = null;
-    updateUI();
-  });
-});
+logoutBtn.onclick = () => {
+  console.log('Logout clicked');
+  signOut(auth)
+    .then(() => {
+      currentUser = null;
+      updateUI();
+    })
+    .catch(console.error);
+};
 
 function updateUI() {
+  console.log('Updating UI, user:', currentUser);
   if (currentUser) {
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'block';
@@ -50,75 +55,63 @@ function updateUI() {
   }
 }
 
-marginInput.addEventListener('input', () => {
-  const margin = parseFloat(marginInput.value);
-  if (margin >= 0 && margin <= 100) {
-    const markup = (margin / (100 - margin)) * 100;
-    markupInput.value = markup.toFixed(2);
-  } else {
-    markupInput.value = '';
-  }
-});
-
-markupInput.addEventListener('input', () => {
-  const markup = parseFloat(markupInput.value);
-  if (markup >= 0) {
-    const margin = (markup / (markup + 100)) * 100;
-    marginInput.value = margin.toFixed(2);
-  } else {
-    marginInput.value = '';
-  }
-});
-
-form.addEventListener('submit', async (event) => {
-  event.preventDefault();
+form.onsubmit = async (e) => {
+  e.preventDefault();
 
   if (!currentUser) {
-    alert('Devi essere autenticato per salvare i dati.');
+    alert('Devi essere autenticato per usare questa funzione.');
     return;
   }
 
   const cost = parseFloat(document.getElementById('cost').value);
   const price = parseFloat(document.getElementById('price').value);
-  const margin = parseFloat(marginInput.value);
-  const markup = parseFloat(markupInput.value);
+  const marginInput = parseFloat(document.getElementById('marginInput').value);
+  const markupInput = parseFloat(document.getElementById('markupInput').value);
 
-  if (cost > 0 && price > 0 && price > cost) {
-    marginEl.textContent = margin.toFixed(2) + '%';
-    markupEl.textContent = markup.toFixed(2) + '%';
-
-    try {
-      // Salvataggio dati utente in documento dedicato per aggiornamento
-      await setDoc(doc(db, 'users', currentUser.uid), { cost, price, margin, markup });
-      console.log('Dati salvati.');
-    } catch (error) {
-      console.error('Errore salvataggio:', error);
-    }
-  } else {
+  if (cost <= 0 || price <= 0 || price <= cost) {
     marginEl.textContent = 'Input non valido';
     markupEl.textContent = 'Input non valido';
+    return;
   }
-});
+
+  marginEl.textContent = marginInput.toFixed(2) + '%';
+  markupEl.textContent = markupInput.toFixed(2) + '%';
+
+  try {
+    await setDoc(doc(db, 'users', currentUser.uid), {
+      cost,
+      price,
+      margin: marginInput,
+      markup: markupInput,
+      timestamp: new Date()
+    });
+    console.log('Dati salvati su Firestore');
+  } catch (err) {
+    console.error('Errore salvataggio dati:', err);
+  }
+};
 
 async function loadUserData() {
   if (!currentUser) return;
   const userDoc = doc(db, 'users', currentUser.uid);
 
   try {
-    const docSnap = await getDocs(query(collection(db, 'users'), where('__name__', '==', currentUser.uid)));
-    if (docSnap.docs.length > 0) {
-      const data = docSnap.docs[0].data();
+    const q = query(collection(db, 'users'), where('__name__', '==', currentUser.uid));
+    const querySnap = await getDocs(q);
+    if (querySnap.docs.length > 0) {
+      const data = querySnap.docs[0].data();
       document.getElementById('cost').value = data.cost || '';
       document.getElementById('price').value = data.price || '';
-      marginInput.value = data.margin || '';
-      markupInput.value = data.markup || '';
+      document.getElementById('marginInput').value = data.margin || '';
+      document.getElementById('markupInput').value = data.markup || '';
+      console.log('Dati utente caricati:', data);
     }
-  } catch (error) {
-    console.error('Errore caricamento dati utente:', error);
+  } catch (err) {
+    console.error('Errore caricamento dati:', err);
   }
 }
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, user => {
   currentUser = user;
   updateUI();
   if (user) loadUserData();
