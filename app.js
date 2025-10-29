@@ -19,9 +19,11 @@ const costInput = document.getElementById('cost');
 const priceInput = document.getElementById('price');
 const marginInput = document.getElementById('marginInput');
 const markupInput = document.getElementById('markupInput');
+const quotaInput = document.getElementById('quotaPercent');
+const quotaDesc = document.getElementById('quotaDesc');
 
 let currentUser = null;
-let updating = false; // flag per prevenire loop
+let updating = false; // per evitare loop
 
 // Gestione login/logout
 loginBtn.onclick = () => {
@@ -56,113 +58,98 @@ function clearFields() {
   priceInput.value = '';
   marginInput.value = '';
   markupInput.value = '';
+  quotaInput.value = '';
+  document.getElementById('margin').textContent = '';
+  document.getElementById('markup').textContent = '';
+  document.getElementById('prezzoFinale').textContent = '';
 }
 
-// Funzioni di calcolo
-function calcMargin(cost, price) {
-  if (cost > 0 && price > cost) return ((price - cost) / price) * 100;
-  return 0;
+// Funzioni di calcolo con quote consorzio
+function calcPrezzoDaCostMargine(cost, margine) {
+  return cost / (1 - margine / 100);
 }
-function calcMarkup(cost, price) {
-  if (cost > 0) return ((price - cost) / cost) * 100;
-  return 0;
-}
-function calcPriceFromMargin(cost, margin) {
-  return cost / (1 - margin / 100);
-}
-function calcPriceFromMarkup(cost, markup) {
+function calcPrezzoDaCostMarkup(cost, markup) {
   return cost + (cost * markup / 100);
 }
+function calcMargineDaPrezzo(cost, prezzo) {
+  return ((prezzo - cost) / prezzo) * 100;
+}
+function calcMarkupDaPrezzo(cost, prezzo) {
+  return ((prezzo - cost) / cost) * 100;
+}
 
-// Gestione sincronizzazione live
+// Gestione aggiornamenti live
 function setupListeners() {
-  costInput.oninput = () => updateFromCost();
-  priceInput.oninput = () => updateFromPrice();
-  marginInput.oninput = () => updateFromMargin();
-  markupInput.oninput = () => updateFromMarkup();
+  costInput.oninput = () => updateFromInputs();
+  priceInput.oninput = () => updateFromInputs();
+  marginInput.oninput = () => updateFromInputs();
+  markupInput.oninput = () => updateFromInputs();
+  quotaInput.oninput = () => updateFromQuota();
 }
 
-function updateFromCost() {
+function updateFromInputs() {
   if (updating) return;
   updating = true;
+
   const cost = parseFloat(costInput.value);
-  // Se prezzo vuoto, calcolo da margine/markup
-  const margin = parseFloat(marginInput.value);
+  const prezzo = parseFloat(priceInput.value);
+  const margine = parseFloat(marginInput.value);
   const markup = parseFloat(markupInput.value);
-  if (!isNaN(cost)) {
-    if (margin === 0 && markup === 0) {
-      // nessuna info di prezzo, aspetta
-    } else if (margin !== 0 || markup !== 0) {
-      // aggiornare prezzo
-      if (margin !== 0) {
-        const price = calcPriceFromMargin(cost, margin);
-        if (!isNaN(price)) priceInput.value = price.toFixed(2);
-      } else if (markup !== 0) {
-        const price = calcPriceFromMarkup(cost, markup);
-        if (!isNaN(price)) priceInput.value = price.toFixed(2);
-      }
+  const quotaPercent = parseFloat(quotaInput.value);
+
+  // Gestione quota consorzio
+  const quotaAmount = (isNaN(quotaPercent) ? 0 : quotaPercent) / 100;
+  let costNetto = cost;
+  if (!isNaN(costo) && quotaAmount > 0) {
+    // sottrae quota dal costo lordo
+    costNetto = cost - (cost * quotaAmount);
+  }
+
+  // Calcolo prezzo finale considerando quota
+  if (!isNaN(cost) && !isNaN(margine) && (marginInput === document.activeElement || marginInput.value === '')) {
+    // se margine dato, calcola prezzo
+    const nuovoPrezzo = calcPrezzoDaCostMargine(cost, margine);
+    if (!isNaN(nuovoPrezzo)) {
+      priceInput.value = nuovoPrezzo.toFixed(2);
     }
+  } else if (!isNaN(cost) && !isNaN(markup) && (markupInput === document.activeElement || markupInput.value === '')) {
+    // se markup dato, calcola prezzo
+    const nuovoPrezzo = calcPrezzoDaCostMarkup(cost, markup);
+    if (!isNaN(nuovoPrezzo)) {
+      priceInput.value = nuovoPrezzo.toFixed(2);
+    }
+  } else if (!isNaN(cost) && !isNaN(prezo) && (priceInput === document.activeElement || priceInput.value === '')) {
+    // se prezzo impostato, calcola margine e markup
+    const margineCalcolato = calcMargineDaPrezzo(cost, prezzo);
+    const markupCalcolato = calcMarkupDaPrezzo(cost, prezzo);
+    marginInput.value = margineCalcolato.toFixed(2);
+    markupInput.value = markupCalcolato.toFixed(2);
   }
-  recalcMargins();
+  // Aggiorno margini visuali
+  if (!isNaN(cost) && !isNaN(prezzo)) {
+    document.getElementById('margin').textContent = calcMarginDaPrezzo(cost, prezzo).toFixed(2) + '%';
+    document.getElementById('markup').textContent = calcMarkupDaPrezzo(cost, prezzo).toFixed(2) + '%';
+    // Prezzo finale considerando quota
+    const prezzoFinale = !isNaN(prezzo) ? prezzo : calcPrezzoDaCostMarkup(cost, markup);
+    document.getElementById('prezzoFinale').textContent = (prezzoFinale * (1 - quotaAmount)).toFixed(2);
+  }
   updating = false;
 }
 
-function updateFromPrice() {
+function updateFromQuota() {
   if (updating) return;
   updating = true;
-  const price = parseFloat(priceInput.value);
-  const cost = parseFloat(costInput.value);
-  if (!isNaN(cost) && !isNaN(price)) {
-    const margin = calcMargin(cost, price);
-    marginInput.value = margin.toFixed(2);
-    const markup = calcMarkup(cost, price);
-    markupInput.value = markup.toFixed(2);
+  // Ricalcola prezzo finale con quota
+  const quotaPercent = parseFloat(quotaInput.value);
+  const quotaAmount = (isNaN(quotaPercent) ? 0 : quotaPercent) / 100;
+  const prezzo = parseFloat(priceInput.value);
+  if (!isNaN(prezzo)) {
+    document.getElementById('prezzoFinale').textContent = (prezzo * (1 - quotaAmount)).toFixed(2);
   }
-  recalcMargins();
   updating = false;
 }
 
-function updateFromMargin() {
-  if (updating) return;
-  updating = true;
-  const margin = parseFloat(marginInput.value);
-  const cost = parseFloat(costInput.value);
-  if (!isNaN(cost) && !isNaN(margin)) {
-    const price = calcPriceFromMargin(cost, margin);
-    if (!isNaN(price)) priceInput.value = price.toFixed(2);
-  }
-  recalcMargins();
-  updating = false;
-}
-
-function updateFromMarkup() {
-  if (updating) return;
-  updating = true;
-  const markup = parseFloat(markupInput.value);
-  const cost = parseFloat(costInput.value);
-  if (!isNaN(cost) && !isNaN(markup)) {
-    const price = calcPriceFromMarkup(cost, markup);
-    if (!isNaN(price)) priceInput.value = price.toFixed(2);
-  }
-  recalcMargins();
-  updating = false;
-}
-
-function recalcMargins() {
-  const cost = parseFloat(costInput.value);
-  const price = parseFloat(priceInput.value);
-  if (!isNaN(cost) && !isNaN(price) && price > cost) {
-    const margin = calcMargin(cost, price);
-    const markup = calcMarkup(cost, price);
-    document.getElementById('margin').textContent = margin.toFixed(2) + '%';
-    document.getElementById('markup').textContent = markup.toFixed(2) + '%';
-  } else {
-    document.getElementById('margin').textContent = '';
-    document.getElementById('markup').textContent = '';
-  }
-}
-
-// Carica dati utente
+// Funzione di caricamento dati utente e inizializzazione
 async function loadUserData() {
   if (!currentUser) return;
   const q = query(collection(db, 'users'), where('__name__', '==', currentUser.uid));
@@ -173,7 +160,8 @@ async function loadUserData() {
     priceInput.value = data.price || '';
     marginInput.value = data.margin || '';
     markupInput.value = data.markup || '';
-    updateFromCost();
+    quotaInput.value = data.quotaPercent || '';
+    updateFromInputs();
   }
 }
 
