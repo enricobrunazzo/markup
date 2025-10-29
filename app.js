@@ -100,7 +100,7 @@ function updateFromInputs() {
   // Gestione quota consorzio
   const quotaAmount = (isNaN(quotaPercent) ? 0 : quotaPercent) / 100;
   let costNetto = cost;
-  if (!isNaN(costo) && quotaAmount > 0) {
+  if (!isNaN(cost) && quotaAmount > 0) {
     // sottrae quota dal costo lordo
     costNetto = cost - (cost * quotaAmount);
   }
@@ -118,7 +118,7 @@ function updateFromInputs() {
     if (!isNaN(nuovoPrezzo)) {
       priceInput.value = nuovoPrezzo.toFixed(2);
     }
-  } else if (!isNaN(cost) && !isNaN(prezo) && (priceInput === document.activeElement || priceInput.value === '')) {
+  } else if (!isNaN(cost) && !isNaN(prezzo) && (priceInput === document.activeElement || priceInput.value === '')) {
     // se prezzo impostato, calcola margine e markup
     const margineCalcolato = calcMargineDaPrezzo(cost, prezzo);
     const markupCalcolato = calcMarkupDaPrezzo(cost, prezzo);
@@ -127,7 +127,7 @@ function updateFromInputs() {
   }
   // Aggiorno margini visuali
   if (!isNaN(cost) && !isNaN(prezzo)) {
-    document.getElementById('margin').textContent = calcMarginDaPrezzo(cost, prezzo).toFixed(2) + '%';
+    document.getElementById('margin').textContent = calcMargineDaPrezzo(cost, prezzo).toFixed(2) + '%';
     document.getElementById('markup').textContent = calcMarkupDaPrezzo(cost, prezzo).toFixed(2) + '%';
     // Prezzo finale considerando quota
     const prezzoFinale = !isNaN(prezzo) ? prezzo : calcPrezzoDaCostMarkup(cost, markup);
