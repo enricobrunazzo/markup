@@ -1,9 +1,13 @@
-console.log("Script caricato - verifica UI autenticazione");
+// Import da CDN Firebase per ambiente browser
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
+import { getFirestore, collection, doc, setDoc, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
 
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, doc, setDoc, getDocs, query, where } from 'firebase/firestore/lite';
-import app from './firebaseConfig';
+// Configurazione Firebase da file separato
+import { firebaseConfig } from './firebaseConfig.js';
 
+// Inizializza Firebase
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
@@ -13,9 +17,6 @@ const logoutBtn = document.getElementById('logoutBtn');
 const form = document.getElementById('calcForm');
 const marginEl = document.getElementById('margin');
 const markupEl = document.getElementById('markup');
-
-// log UI elements
-console.log(loginBtn, logoutBtn, form);
 
 let currentUser = null;
 
