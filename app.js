@@ -15,16 +15,15 @@ const db = getFirestore(app);
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const form = document.getElementById('calcForm');
-const marginEl = document.getElementById('margin');
-const markupEl = document.getElementById('markup');
-
 const costInput = document.getElementById('cost');
 const priceInput = document.getElementById('price');
 const marginInput = document.getElementById('marginInput');
 const markupInput = document.getElementById('markupInput');
 
 let currentUser = null;
+let updating = false; // flag per prevenire loop
 
+// Gestione login/logout
 loginBtn.onclick = () => {
   signInWithPopup(auth, provider).then(result => {
     currentUser = result.user;
@@ -32,7 +31,6 @@ loginBtn.onclick = () => {
     loadUserData();
   }).catch(console.error);
 };
-
 logoutBtn.onclick = () => {
   signOut(auth).then(() => {
     currentUser = null;
@@ -49,109 +47,133 @@ function updateUI() {
     loginBtn.style.display = 'block';
     logoutBtn.style.display = 'none';
     form.style.display = 'none';
-    marginEl.textContent = '';
-    markupEl.textContent = '';
+    clearFields();
   }
 }
 
-// Funzioni di calcolo per margine, markup, prezzo
-function calculateMarginFromPrice(cost, price) {
-  if (price > cost) {
-    return ((price - cost) / price) * 100;
-  }
+function clearFields() {
+  costInput.value = '';
+  priceInput.value = '';
+  marginInput.value = '';
+  markupInput.value = '';
+}
+
+// Funzioni di calcolo
+function calcMargin(cost, price) {
+  if (cost > 0 && price > cost) return ((price - cost) / price) * 100;
   return 0;
 }
-function calculateMarkupFromPrice(cost, price) {
-  if (cost > 0) {
-    return ((price - cost) / cost) * 100;
-  }
+function calcMarkup(cost, price) {
+  if (cost > 0) return ((price - cost) / cost) * 100;
   return 0;
 }
-function calculatePriceFromMargin(cost, margin) {
+function calcPriceFromMargin(cost, margin) {
   return cost / (1 - margin / 100);
 }
-function calculatePriceFromMarkup(cost, markup) {
+function calcPriceFromMarkup(cost, markup) {
   return cost + (cost * markup / 100);
 }
 
-function updateValues() {
-  const cost = parseFloat(costInput.value);
-  const price = parseFloat(priceInput.value);
-  const marginVal = parseFloat(marginInput.value);
-  const markupVal = parseFloat(markupInput.value);
+// Gestione sincronizzazione live
+function setupListeners() {
+  costInput.oninput = () => updateFromCost();
+  priceInput.oninput = () => updateFromPrice();
+  marginInput.oninput = () => updateFromMargin();
+  markupInput.oninput = () => updateFromMarkup();
+}
 
-  // Aggiorna margine e markup se sono vuoti o modificati
-  if (!isNaN(cost) && (!isNaN(price) || marginInput === document.activeElement || markupInput === document.activeElement)) {
-    if (!isNaN(price) && (marginInput.value === '' || document.activeElement === marginInput)) {
-      const margineCalcolato = calculateMarginFromPrice(cost, price);
-      marginInput.value = margineCalcolato.toFixed(2);
-    } else if (!isNaN(marginVal) && (priceInput.value === '' || document.activeElement === priceInput)) {
-      const priceCalcolato = calculatePriceFromMargin(cost, marginVal);
-      priceInput.value = priceCalcolato.toFixed(2);
+function updateFromCost() {
+  if (updating) return;
+  updating = true;
+  const cost = parseFloat(costInput.value);
+  // Se prezzo vuoto, calcolo da margine/markup
+  const margin = parseFloat(marginInput.value);
+  const markup = parseFloat(markupInput.value);
+  if (!isNaN(cost)) {
+    if (margin === 0 && markup === 0) {
+      // nessuna info di prezzo, aspetta
+    } else if (margin !== 0 || markup !== 0) {
+      // aggiornare prezzo
+      if (margin !== 0) {
+        const price = calcPriceFromMargin(cost, margin);
+        if (!isNaN(price)) priceInput.value = price.toFixed(2);
+      } else if (markup !== 0) {
+        const price = calcPriceFromMarkup(cost, markup);
+        if (!isNaN(price)) priceInput.value = price.toFixed(2);
+      }
     }
   }
+  recalcMargins();
+  updating = false;
+}
 
+function updateFromPrice() {
+  if (updating) return;
+  updating = true;
+  const price = parseFloat(priceInput.value);
+  const cost = parseFloat(costInput.value);
   if (!isNaN(cost) && !isNaN(price)) {
-    marginEl.textContent = calculateMarginFromPrice(cost, price).toFixed(2) + '%';
-    markupEl.textContent = calculateMarkupFromPrice(cost, price).toFixed(2) + '%';
+    const margin = calcMargin(cost, price);
+    marginInput.value = margin.toFixed(2);
+    const markup = calcMarkup(cost, price);
+    markupInput.value = markup.toFixed(2);
+  }
+  recalcMargins();
+  updating = false;
+}
+
+function updateFromMargin() {
+  if (updating) return;
+  updating = true;
+  const margin = parseFloat(marginInput.value);
+  const cost = parseFloat(costInput.value);
+  if (!isNaN(cost) && !isNaN(margin)) {
+    const price = calcPriceFromMargin(cost, margin);
+    if (!isNaN(price)) priceInput.value = price.toFixed(2);
+  }
+  recalcMargins();
+  updating = false;
+}
+
+function updateFromMarkup() {
+  if (updating) return;
+  updating = true;
+  const markup = parseFloat(markupInput.value);
+  const cost = parseFloat(costInput.value);
+  if (!isNaN(cost) && !isNaN(markup)) {
+    const price = calcPriceFromMarkup(cost, markup);
+    if (!isNaN(price)) priceInput.value = price.toFixed(2);
+  }
+  recalcMargins();
+  updating = false;
+}
+
+function recalcMargins() {
+  const cost = parseFloat(costInput.value);
+  const price = parseFloat(priceInput.value);
+  if (!isNaN(cost) && !isNaN(price) && price > cost) {
+    const margin = calcMargin(cost, price);
+    const markup = calcMarkup(cost, price);
+    document.getElementById('margin').textContent = margin.toFixed(2) + '%';
+    document.getElementById('markup').textContent = markup.toFixed(2) + '%';
   } else {
-    marginEl.textContent = '';
-    markupEl.textContent = '';
+    document.getElementById('margin').textContent = '';
+    document.getElementById('markup').textContent = '';
   }
 }
 
-// Event listeners per calcolo live
-costInput.addEventListener('input', updateValues);
-priceInput.addEventListener('input', updateValues);
-marginInput.addEventListener('input', updateValues);
-markupInput.addEventListener('input', updateValues);
-
-form.onsubmit = async (e) => {
-  e.preventDefault();
-
-  if (!currentUser) {
-    alert('Devi essere autenticato per usare questa funzione.');
-    return;
-  }
-
-  const cost = parseFloat(costInput.value);
-  const price = parseFloat(priceInput.value);
-  const marginVal = parseFloat(marginInput.value);
-  const markupVal = parseFloat(markupInput.value);
-
-  if (cost <= 0 || price <= 0 || price <= cost) {
-    marginEl.textContent = 'Input non valido';
-    markupEl.textContent = 'Input non valido';
-    return;
-  }
-
-  marginEl.textContent = marginVal.toFixed(2) + '%';
-  markupEl.textContent = markupVal.toFixed(2) + '%';
-
-  try {
-    await setDoc(doc(db, 'users', currentUser.uid), {
-      cost,
-      price,
-      margin: marginVal,
-      markup: markupVal,
-      timestamp: new Date()
-    });
-  } catch (err) {
-    console.error('Errore salvataggio dati:', err);
-  }
-};
-
+// Carica dati utente
 async function loadUserData() {
   if (!currentUser) return;
   const q = query(collection(db, 'users'), where('__name__', '==', currentUser.uid));
   const querySnap = await getDocs(q);
   if (querySnap.docs.length > 0) {
     const data = querySnap.docs[0].data();
-    document.getElementById('cost').value = data.cost || '';
-    document.getElementById('price').value = data.price || '';
-    document.getElementById('marginInput').value = data.margin || '';
-    document.getElementById('markupInput').value = data.markup || '';
-    updateValues();
+    costInput.value = data.cost || '';
+    priceInput.value = data.price || '';
+    marginInput.value = data.margin || '';
+    markupInput.value = data.markup || '';
+    updateFromCost();
   }
 }
 
@@ -161,4 +183,5 @@ onAuthStateChanged(auth, user => {
   if (user) loadUserData();
 });
 
+setupListeners();
 updateUI();
