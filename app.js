@@ -10,6 +10,7 @@
   const hint        = document.getElementById('hint');
   const hintQuota   = document.getElementById('hintQuota');
 
+  // quale campo sta modificando l'utente in questo momento
   let active = null;
 
   function fmt(n, dec = 2) {
@@ -56,23 +57,54 @@
     const hasM = !isNaN(M);
     const hasP = !isNaN(P) && P > 0;
 
-    if (active !== 'prezzo' && hasC && hasM) {
+    // priorità esplicita basata su quale campo sta modificando l'utente
+    if (active === 'costo' || active === 'markup') {
+      // costo o markup modificati -> ricalcola sempre prezzo
+      if (hasC && hasM) {
+        const np = C * (1 + M / 100);
+        prezzoEl.value = fmt(np);
+        updateBadges(C, M, np);
+      } else {
+        hideBadges();
+        hint.textContent = 'Inserisci due valori — il terzo viene calcolato automaticamente.';
+      }
+      return;
+    }
+
+    if (active === 'prezzo') {
+      // prezzo modificato -> ricalcola markup se c'e' il costo, altrimenti costo se c'e' il markup
+      if (hasC && hasP) {
+        const nm = ((P - C) / C) * 100;
+        markupEl.value = fmt(nm);
+        updateBadges(C, nm, P);
+      } else if (hasM && hasP) {
+        const nc = P / (1 + M / 100);
+        costoEl.value = fmt(nc);
+        updateBadges(nc, M, P);
+      } else {
+        hideBadges();
+        hint.textContent = 'Inserisci due valori — il terzo viene calcolato automaticamente.';
+      }
+      return;
+    }
+
+    // fallback: nessun campo attivo (es. primo carico)
+    if (hasC && hasM) {
       const np = C * (1 + M / 100);
-      if (prezzoEl !== document.activeElement) prezzoEl.value = fmt(np);
-      updateBadges(C, M, np); return;
-    }
-    if (active !== 'markup' && hasC && hasP) {
+      prezzoEl.value = fmt(np);
+      updateBadges(C, M, np);
+    } else if (hasC && hasP) {
       const nm = ((P - C) / C) * 100;
-      if (markupEl !== document.activeElement) markupEl.value = fmt(nm);
-      updateBadges(C, nm, P); return;
-    }
-    if (active !== 'costo' && hasM && hasP) {
+      markupEl.value = fmt(nm);
+      updateBadges(C, nm, P);
+    } else if (hasM && hasP) {
       const nc = P / (1 + M / 100);
-      if (costoEl !== document.activeElement) costoEl.value = fmt(nc);
-      updateBadges(nc, M, P); return;
+      costoEl.value = fmt(nc);
+      updateBadges(nc, M, P);
+    } else {
+      hideBadges();
+      hint.textContent = 'Inserisci due valori — il terzo viene calcolato automaticamente.';
     }
-    hideBadges();
-    hint.textContent = 'Inserisci due valori — il terzo viene calcolato automaticamente.';
   }
 
   function calcQuota() {
