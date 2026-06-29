@@ -1,17 +1,16 @@
 (function () {
-  const costoEl     = document.getElementById('costo');
-  const markupEl    = document.getElementById('markup');
-  const prezzoEl    = document.getElementById('prezzo');
-  const quotaEl     = document.getElementById('quotaPercent');
-  const bMarkup     = document.getElementById('badgeMarkup');
-  const bMargine    = document.getElementById('badgeMargine');
-  const bGuad       = document.getElementById('badgeGuadagno');
-  const hint        = document.getElementById('hint');
-  const hintQuota   = document.getElementById('hintQuota');
+  const costoEl   = document.getElementById('costo');
+  const markupEl  = document.getElementById('markup');
+  const prezzoEl  = document.getElementById('prezzo');
+  const quotaEl   = document.getElementById('quotaPercent');
+  const bMarkup   = document.getElementById('badgeMarkup');
+  const bMargine  = document.getElementById('badgeMargine');
+  const bGuad     = document.getElementById('badgeGuadagno');
+  const hint      = document.getElementById('hint');
+  const hintQuota = document.getElementById('hintQuota');
 
   let active = null;
 
-  // Accetta sia virgola che punto come separatore decimale
   function parse(str) {
     if (!str) return NaN;
     return parseFloat(str.replace(',', '.'));
@@ -21,8 +20,9 @@
     return n.toLocaleString('it-IT', { minimumFractionDigits: dec, maximumFractionDigits: dec });
   }
 
+  // Scrive nel campo solo se NON ha il focus (non interrompere la digitazione)
   function setField(el, val) {
-    el.value = val;
+    if (document.activeElement !== el) el.value = val;
   }
 
   function animateValue(el, newVal) {
@@ -54,7 +54,7 @@
     showBadge(bMarkup,  document.getElementById('badgeMarkupText'),  'Markup '  + fmt(markup)  + '%', 'neutral');
     showBadge(bMargine, document.getElementById('badgeMargineText'), 'Margine ' + fmt(margine) + '%', tipo);
     showBadge(bGuad,    document.getElementById('badgeGuadagnoText'), (guadagno >= 0 ? '+' : '') + fmt(guadagno) + ' €', tipo);
-    hint.textContent = 'Su €' + fmt(prezzo) + ' di vendita guadagni €' + fmt(guadagno) + ' (' + fmt(margine, 1) + '% di margine).';
+    hint.textContent = 'Su \u20ac' + fmt(prezzo) + ' di vendita guadagni \u20ac' + fmt(guadagno) + ' (' + fmt(margine, 1) + '% di margine).';
   }
 
   function calc() {
@@ -72,7 +72,7 @@
         updateBadges(C, M, np);
       } else {
         hideBadges();
-        hint.textContent = 'Inserisci due valori — il terzo viene calcolato automaticamente.';
+        hint.textContent = 'Inserisci due valori \u2014 il terzo viene calcolato automaticamente.';
       }
       return;
     }
@@ -88,12 +88,12 @@
         updateBadges(nc, M, P);
       } else {
         hideBadges();
-        hint.textContent = 'Inserisci due valori — il terzo viene calcolato automaticamente.';
+        hint.textContent = 'Inserisci due valori \u2014 il terzo viene calcolato automaticamente.';
       }
       return;
     }
 
-    // fallback senza campo attivo
+    // fallback
     if (hasC && hasM) {
       const np = C * (1 + M / 100);
       setField(prezzoEl, fmt(np));
@@ -108,8 +108,15 @@
       updateBadges(nc, M, P);
     } else {
       hideBadges();
-      hint.textContent = 'Inserisci due valori — il terzo viene calcolato automaticamente.';
+      hint.textContent = 'Inserisci due valori \u2014 il terzo viene calcolato automaticamente.';
     }
+  }
+
+  // Al blur: formatta il campo appena abbandonato e ricalcola
+  function onBlur(el) {
+    const v = parse(el.value);
+    if (!isNaN(v)) el.value = fmt(v);
+    setTimeout(() => { active = null; calc(); }, 50);
   }
 
   function calcQuota() {
@@ -117,7 +124,7 @@
     const p = parse(prezzoEl.value);
     if (!isNaN(q) && !isNaN(p) && p > 0) {
       const netto = p * (1 - q / 100);
-      hintQuota.textContent = 'Prezzo netto quota: €' + fmt(netto) + ' (quota €' + fmt(p - netto) + ')';
+      hintQuota.textContent = 'Prezzo netto quota: \u20ac' + fmt(netto) + ' (quota \u20ac' + fmt(p - netto) + ')';
     } else {
       hintQuota.textContent = '';
     }
@@ -126,10 +133,9 @@
   [costoEl, markupEl, prezzoEl].forEach(el => {
     el.addEventListener('focus', () => { active = el.id; });
     el.addEventListener('input', calc);
-    el.addEventListener('blur',  () => setTimeout(() => { active = null; }, 50));
+    el.addEventListener('blur',  () => onBlur(el));
   });
-  document.getElementById('quotaPercent').addEventListener('input', calcQuota);
-  document.getElementById('quotaDesc').addEventListener('input', () => {});
+  quotaEl.addEventListener('input', calcQuota);
 
   // THEME TOGGLE
   const toggleBtn = document.querySelector('[data-theme-toggle]');
