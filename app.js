@@ -1,6 +1,6 @@
 // Import da CDN Firebase per ambiente browser
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
+import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
 import { getFirestore, collection, doc, setDoc, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
 
 // Configurazione Firebase da file separato
@@ -25,13 +25,18 @@ const quotaDesc = document.getElementById('quotaDesc');
 let currentUser = null;
 let updating = false; // per evitare loop
 
-// Gestione login/logout
-loginBtn.onclick = () => {
-  signInWithPopup(auth, provider).then(result => {
+// Gestione risultato redirect (eseguito al caricamento pagina dopo il redirect)
+getRedirectResult(auth).then(result => {
+  if (result && result.user) {
     currentUser = result.user;
     updateUI();
     loadUserData();
-  }).catch(console.error);
+  }
+}).catch(console.error);
+
+// Gestione login/logout
+loginBtn.onclick = () => {
+  signInWithRedirect(auth, provider);
 };
 logoutBtn.onclick = () => {
   signOut(auth).then(() => {
