@@ -10,11 +10,14 @@
   const hint        = document.getElementById('hint');
   const hintQuota   = document.getElementById('hintQuota');
 
-  // quale campo sta modificando l'utente in questo momento
   let active = null;
 
   function fmt(n, dec = 2) {
     return n.toLocaleString('it-IT', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
+
+  function setField(el, val) {
+    requestAnimationFrame(() => { el.value = val; });
   }
 
   function animateValue(el, newVal) {
@@ -57,12 +60,10 @@
     const hasM = !isNaN(M);
     const hasP = !isNaN(P) && P > 0;
 
-    // priorità esplicita basata su quale campo sta modificando l'utente
     if (active === 'costo' || active === 'markup') {
-      // costo o markup modificati -> ricalcola sempre prezzo
       if (hasC && hasM) {
         const np = C * (1 + M / 100);
-        prezzoEl.value = fmt(np);
+        setField(prezzoEl, fmt(np));
         updateBadges(C, M, np);
       } else {
         hideBadges();
@@ -72,14 +73,13 @@
     }
 
     if (active === 'prezzo') {
-      // prezzo modificato -> ricalcola markup se c'e' il costo, altrimenti costo se c'e' il markup
       if (hasC && hasP) {
         const nm = ((P - C) / C) * 100;
-        markupEl.value = fmt(nm);
+        setField(markupEl, fmt(nm));
         updateBadges(C, nm, P);
       } else if (hasM && hasP) {
         const nc = P / (1 + M / 100);
-        costoEl.value = fmt(nc);
+        setField(costoEl, fmt(nc));
         updateBadges(nc, M, P);
       } else {
         hideBadges();
@@ -88,18 +88,18 @@
       return;
     }
 
-    // fallback: nessun campo attivo (es. primo carico)
+    // fallback senza campo attivo
     if (hasC && hasM) {
       const np = C * (1 + M / 100);
-      prezzoEl.value = fmt(np);
+      setField(prezzoEl, fmt(np));
       updateBadges(C, M, np);
     } else if (hasC && hasP) {
       const nm = ((P - C) / C) * 100;
-      markupEl.value = fmt(nm);
+      setField(markupEl, fmt(nm));
       updateBadges(C, nm, P);
     } else if (hasM && hasP) {
       const nc = P / (1 + M / 100);
-      costoEl.value = fmt(nc);
+      setField(costoEl, fmt(nc));
       updateBadges(nc, M, P);
     } else {
       hideBadges();
