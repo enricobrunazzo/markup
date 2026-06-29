@@ -3,7 +3,6 @@
   const markupEl    = document.getElementById('markup');
   const prezzoEl    = document.getElementById('prezzo');
   const quotaEl     = document.getElementById('quotaPercent');
-  const quotaDescEl = document.getElementById('quotaDesc');
   const bMarkup     = document.getElementById('badgeMarkup');
   const bMargine    = document.getElementById('badgeMargine');
   const bGuad       = document.getElementById('badgeGuadagno');
@@ -12,12 +11,18 @@
 
   let active = null;
 
+  // Accetta sia virgola che punto come separatore decimale
+  function parse(str) {
+    if (!str) return NaN;
+    return parseFloat(str.replace(',', '.'));
+  }
+
   function fmt(n, dec = 2) {
     return n.toLocaleString('it-IT', { minimumFractionDigits: dec, maximumFractionDigits: dec });
   }
 
   function setField(el, val) {
-    requestAnimationFrame(() => { el.value = val; });
+    el.value = val;
   }
 
   function animateValue(el, newVal) {
@@ -53,9 +58,9 @@
   }
 
   function calc() {
-    const C = parseFloat(costoEl.value);
-    const M = parseFloat(markupEl.value);
-    const P = parseFloat(prezzoEl.value);
+    const C = parse(costoEl.value);
+    const M = parse(markupEl.value);
+    const P = parse(prezzoEl.value);
     const hasC = !isNaN(C) && C > 0;
     const hasM = !isNaN(M);
     const hasP = !isNaN(P) && P > 0;
@@ -108,8 +113,8 @@
   }
 
   function calcQuota() {
-    const q = parseFloat(quotaEl.value);
-    const p = parseFloat(prezzoEl.value);
+    const q = parse(quotaEl.value);
+    const p = parse(prezzoEl.value);
     if (!isNaN(q) && !isNaN(p) && p > 0) {
       const netto = p * (1 - q / 100);
       hintQuota.textContent = 'Prezzo netto quota: €' + fmt(netto) + ' (quota €' + fmt(p - netto) + ')';
@@ -123,7 +128,8 @@
     el.addEventListener('input', calc);
     el.addEventListener('blur',  () => setTimeout(() => { active = null; }, 50));
   });
-  quotaEl.addEventListener('input', calcQuota);
+  document.getElementById('quotaPercent').addEventListener('input', calcQuota);
+  document.getElementById('quotaDesc').addEventListener('input', () => {});
 
   // THEME TOGGLE
   const toggleBtn = document.querySelector('[data-theme-toggle]');

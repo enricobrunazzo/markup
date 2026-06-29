@@ -24,19 +24,19 @@
       <div class="calc-row">
         <div class="field">
           <label for="costo">Costo</label>
-          <input type="number" id="costo" placeholder="100" inputmode="decimal" min="0" step="any">
+          <input type="text" inputmode="decimal" id="costo" placeholder="100" autocomplete="off">
           <span class="unit">€</span>
         </div>
         <div class="sep"></div>
         <div class="field markup-field">
           <label for="markup">Markup</label>
-          <input type="number" id="markup" placeholder="30" inputmode="decimal" step="any">
+          <input type="text" inputmode="decimal" id="markup" placeholder="30" autocomplete="off">
           <span class="unit">%</span>
         </div>
         <div class="sep"></div>
         <div class="field">
           <label for="prezzo">Prezzo</label>
-          <input type="number" id="prezzo" placeholder="130" inputmode="decimal" min="0" step="any">
+          <input type="text" inputmode="decimal" id="prezzo" placeholder="130" autocomplete="off">
           <span class="unit">€</span>
         </div>
       </div>
@@ -55,11 +55,11 @@
           <div class="quota-row">
             <div class="quota-field">
               <label for="quotaPercent">Quota %</label>
-              <input type="number" id="quotaPercent" placeholder="5" inputmode="decimal" min="0" max="100" step="any">
+              <input type="text" inputmode="decimal" id="quotaPercent" placeholder="5" autocomplete="off">
             </div>
             <div class="quota-field">
               <label for="quotaDesc">Descrizione</label>
-              <input type="text" id="quotaDesc" placeholder="es. Consorzio XYZ">
+              <input type="text" id="quotaDesc" placeholder="es. Consorzio XYZ" autocomplete="off">
             </div>
           </div>
           <p class="hint" id="hintQuota"></p>
