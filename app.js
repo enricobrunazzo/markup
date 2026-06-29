@@ -27,30 +27,41 @@ const hintQuota   = document.getElementById('hintQuota');
 let currentUser = null;
 let active = null;
 let saveTimer = null;
-let authReady = false; // diventa true dopo il primo onAuthStateChanged
+let authReady = false;
 
-// Nascondi tutto finche' Firebase non ha risolto lo stato auth
 loginCard.style.display = 'none';
 calcCard.style.display  = 'none';
 
-// ── AUTH ───────────────────────────────────────────────
-// getRedirectResult gestisce il token dopo il ritorno da Google
-getRedirectResult(auth).catch(console.error);
+console.log('[AUTH] app.js caricato, avvio getRedirectResult...');
 
-// onAuthStateChanged e' l'unica fonte di verita' per lo stato utente.
-// Viene chiamato una volta subito (null se non loggato, user se sessione attiva o appena tornati dal redirect)
+getRedirectResult(auth).then(result => {
+  console.log('[AUTH] getRedirectResult result:', result);
+  if (result && result.user) {
+    console.log('[AUTH] utente da redirect:', result.user.email);
+  } else {
+    console.log('[AUTH] nessun utente dal redirect (normale se non arrivo da Google)');
+  }
+}).catch(err => {
+  console.error('[AUTH] getRedirectResult ERROR:', err.code, err.message);
+});
+
 onAuthStateChanged(auth, user => {
+  console.log('[AUTH] onAuthStateChanged fired, user:', user ? user.email : null);
   currentUser = user;
   authReady = true;
   updateUI();
   if (user) loadUserData();
 });
 
-loginBtn.onclick  = () => signInWithRedirect(auth, provider);
+loginBtn.onclick = () => {
+  console.log('[AUTH] click login, avvio signInWithRedirect...');
+  signInWithRedirect(auth, provider);
+};
 logoutBtn.onclick = () => signOut(auth).then(() => { currentUser = null; updateUI(); }).catch(console.error);
 
 function updateUI() {
-  if (!authReady) return; // aspetta che Firebase abbia risolto
+  if (!authReady) return;
+  console.log('[UI] updateUI chiamato, currentUser:', currentUser ? currentUser.email : null);
   if (currentUser) {
     loginCard.style.display = 'none';
     calcCard.style.display  = 'block';
@@ -68,7 +79,6 @@ function clearFields() {
   hintQuota.textContent = '';
 }
 
-// ── CALCOLO ────────────────────────────────────────────
 function fmt(n, dec = 2) {
   return n.toLocaleString('it-IT', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
@@ -144,7 +154,6 @@ function calcQuota() {
   scheduleSave();
 }
 
-// ── LISTENERS ──────────────────────────────────────────
 [costoEl, markupEl, prezzoEl].forEach(el => {
   el.addEventListener('focus', () => { active = el.id; });
   el.addEventListener('input', calc);
@@ -153,7 +162,6 @@ function calcQuota() {
 quotaEl.addEventListener('input', calcQuota);
 quotaDescEl.addEventListener('input', scheduleSave);
 
-// ── FIRESTORE SAVE/LOAD ────────────────────────────────
 function scheduleSave() {
   if (!currentUser) return;
   clearTimeout(saveTimer);
@@ -187,7 +195,6 @@ async function loadUserData() {
   } catch(e) { console.error('loadUserData:', e); }
 }
 
-// ── THEME TOGGLE ───────────────────────────────────────
 const toggleBtn = document.querySelector('[data-theme-toggle]');
 const root = document.documentElement;
 let dark = matchMedia('(prefers-color-scheme:dark)').matches;
