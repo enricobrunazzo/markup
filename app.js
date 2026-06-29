@@ -27,18 +27,21 @@ const hintQuota   = document.getElementById('hintQuota');
 let currentUser = null;
 let active = null;
 let saveTimer = null;
+let authReady = false; // diventa true dopo il primo onAuthStateChanged
+
+// Nascondi tutto finche' Firebase non ha risolto lo stato auth
+loginCard.style.display = 'none';
+calcCard.style.display  = 'none';
 
 // ── AUTH ───────────────────────────────────────────────
-getRedirectResult(auth).then(result => {
-  if (result && result.user) {
-    currentUser = result.user;
-    updateUI();
-    loadUserData();
-  }
-}).catch(console.error);
+// getRedirectResult gestisce il token dopo il ritorno da Google
+getRedirectResult(auth).catch(console.error);
 
+// onAuthStateChanged e' l'unica fonte di verita' per lo stato utente.
+// Viene chiamato una volta subito (null se non loggato, user se sessione attiva o appena tornati dal redirect)
 onAuthStateChanged(auth, user => {
   currentUser = user;
+  authReady = true;
   updateUI();
   if (user) loadUserData();
 });
@@ -47,6 +50,7 @@ loginBtn.onclick  = () => signInWithRedirect(auth, provider);
 logoutBtn.onclick = () => signOut(auth).then(() => { currentUser = null; updateUI(); }).catch(console.error);
 
 function updateUI() {
+  if (!authReady) return; // aspetta che Firebase abbia risolto
   if (currentUser) {
     loginCard.style.display = 'none';
     calcCard.style.display  = 'block';
