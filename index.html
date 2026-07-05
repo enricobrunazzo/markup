@@ -50,6 +50,59 @@
       <p class="hint" id="hint">Inserisci due valori — il terzo viene calcolato automaticamente.</p>
 
       <details class="quota-section">
+        <summary>IVA</summary>
+        <div class="quota-body">
+          <div class="quota-row">
+            <div class="quota-field">
+              <label for="ivaPercent">Aliquota %</label>
+              <input type="text" inputmode="decimal" id="ivaPercent" placeholder="22" autocomplete="off">
+            </div>
+            <div class="quota-field">
+              <label>Aliquote comuni</label>
+              <div class="presets" id="ivaPresets">
+                <button type="button" data-iva="22">22%</button>
+                <button type="button" data-iva="10">10%</button>
+                <button type="button" data-iva="4">4%</button>
+              </div>
+            </div>
+          </div>
+          <p class="hint" id="hintIva"></p>
+        </div>
+      </details>
+
+      <details class="quota-section">
+        <summary>Sconto e trattativa</summary>
+        <div class="quota-body">
+          <div class="quota-row">
+            <div class="quota-field">
+              <label for="scontoPercent">Sconto %</label>
+              <input type="text" inputmode="decimal" id="scontoPercent" placeholder="10" autocomplete="off">
+            </div>
+            <div class="quota-field">
+              <label for="margineTarget">Margine minimo %</label>
+              <input type="text" inputmode="decimal" id="margineTarget" placeholder="20" autocomplete="off">
+            </div>
+          </div>
+          <p class="hint" id="hintSconto"></p>
+          <p class="hint" id="hintMinimo"></p>
+        </div>
+      </details>
+
+      <details class="quota-section">
+        <summary>Quantità e totale</summary>
+        <div class="quota-body">
+          <div class="quota-row">
+            <div class="quota-field">
+              <label for="quantita">Quantità</label>
+              <input type="text" inputmode="decimal" id="quantita" placeholder="1" autocomplete="off">
+            </div>
+            <div class="quota-field"></div>
+          </div>
+          <p class="hint" id="hintTotale"></p>
+        </div>
+      </details>
+
+      <details class="quota-section">
         <summary>Quota consorzio</summary>
         <div class="quota-body">
           <div class="quota-row">

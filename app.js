@@ -3,6 +3,14 @@
   const markupEl  = document.getElementById('markup');
   const prezzoEl  = document.getElementById('prezzo');
   const quotaEl   = document.getElementById('quotaPercent');
+  const ivaEl     = document.getElementById('ivaPercent');
+  const scontoEl  = document.getElementById('scontoPercent');
+  const targetEl  = document.getElementById('margineTarget');
+  const quantEl   = document.getElementById('quantita');
+  const hintIva    = document.getElementById('hintIva');
+  const hintSconto = document.getElementById('hintSconto');
+  const hintMinimo = document.getElementById('hintMinimo');
+  const hintTotale = document.getElementById('hintTotale');
   const bMarkup   = document.getElementById('badgeMarkup');
   const bMargine  = document.getElementById('badgeMargine');
   const bGuad     = document.getElementById('badgeGuadagno');
@@ -42,6 +50,11 @@
 
   function fmt(n, dec = 2) {
     return n.toLocaleString('it-IT', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
+
+  // Formato "leggero" per percentuali/quantità: fino a 2 decimali, senza zeri superflui
+  function fmtP(n) {
+    return n.toLocaleString('it-IT', { maximumFractionDigits: 2 });
   }
 
   function animateValue(el, newVal) {
@@ -147,14 +160,82 @@
     }
   }
 
+  // Aggiorna tutte le sezioni ausiliarie (IVA, sconto, margine minimo, quantità,
+  // quota) a partire da costo e prezzo correnti.
+  function updateExtras() {
+    const C = parse(costoEl.value);
+    const P = parse(prezzoEl.value);
+    const hasC = !isNaN(C) && C > 0;
+    const hasP = !isNaN(P) && P > 0;
+
+    // --- IVA: prezzo IVA inclusa (aliquota inserita o 22% di default) ---
+    let iva = parse(ivaEl.value);
+    if (isNaN(iva)) iva = 22;
+    if (hasP && iva >= 0) {
+      const ivato = P * (1 + iva / 100);
+      hintIva.textContent = 'Prezzo IVA inclusa (' + fmtP(iva) + '%): €' + fmt(ivato) +
+        ' — di cui IVA €' + fmt(ivato - P);
+    } else {
+      hintIva.textContent = 'Inserisci un prezzo per calcolare l\'IVA.';
+    }
+    ivaPresetBtns.forEach(b => b.classList.toggle('active', parseFloat(b.dataset.iva) === iva));
+
+    // --- Sconto in trattativa: prezzo scontato e margine risultante ---
+    const sc = parse(scontoEl.value);
+    if (hasP && !isNaN(sc)) {
+      const ps = P * (1 - sc / 100);
+      if (hasC && ps > 0) {
+        const mg = ((ps - C) / ps) * 100;
+        hintSconto.textContent = 'Con -' + fmtP(sc) + '% → prezzo €' + fmt(ps) +
+          ', margine ' + fmt(mg, 1) + '% (guadagno €' + fmt(ps - C) + ')';
+      } else {
+        hintSconto.textContent = 'Con -' + fmtP(sc) + '% → prezzo scontato €' + fmt(ps);
+      }
+    } else {
+      hintSconto.textContent = '';
+    }
+
+    // --- Prezzo minimo per un margine-obiettivo (dato il costo) ---
+    const tg = parse(targetEl.value);
+    if (hasC && !isNaN(tg) && tg < 100) {
+      const pmin = C / (1 - tg / 100);
+      hintMinimo.textContent = 'Prezzo minimo per margine ≥ ' + fmtP(tg) + '%: €' + fmt(pmin);
+    } else {
+      hintMinimo.textContent = '';
+    }
+
+    // --- Quantità e totale riga ---
+    const qt = parse(quantEl.value);
+    if (hasP && !isNaN(qt) && qt > 0) {
+      const unita = qt === 1 ? 'pezzo' : 'pezzi';
+      let txt = fmtP(qt) + ' ' + unita + ' → totale €' + fmt(P * qt);
+      if (hasC) txt += ' (guadagno totale €' + fmt((P - C) * qt) + ')';
+      hintTotale.textContent = txt;
+    } else {
+      hintTotale.textContent = '';
+    }
+
+    calcQuota();
+  }
+
+  const ivaPresetBtns = Array.from(document.querySelectorAll('#ivaPresets button'));
+
   [costoEl, markupEl, prezzoEl].forEach(el => {
     // in tempo reale: aggiorna badge/terzo campo mentre si digita
-    el.addEventListener('input', () => calc(el.id));
+    el.addEventListener('input', () => { calc(el.id); updateExtras(); });
     // al blur: formatta e ricalcola
-    el.addEventListener('blur', () => onBlur(el));
+    el.addEventListener('blur', () => { onBlur(el); updateExtras(); });
   });
-  quotaEl.addEventListener('input', calcQuota);
-  quotaEl.addEventListener('blur', () => { const v = parse(quotaEl.value); if (!isNaN(v)) quotaEl.value = fmt(v); calcQuota(); });
+
+  // Campi ausiliari: ricalcolano solo le sezioni extra
+  [ivaEl, scontoEl, targetEl, quantEl, quotaEl].forEach(el => {
+    el.addEventListener('input', updateExtras);
+  });
+
+  // Pulsanti aliquota IVA rapida
+  ivaPresetBtns.forEach(b => {
+    b.addEventListener('click', () => { ivaEl.value = b.dataset.iva; updateExtras(); });
+  });
 
   // THEME TOGGLE
   const toggleBtn = document.querySelector('[data-theme-toggle]');
@@ -169,4 +250,7 @@
     root.setAttribute('data-theme', dark ? 'dark' : 'light');
     toggleBtn.innerHTML = dark ? sunSVG : moonSVG;
   });
+
+  // Stato iniziale delle sezioni ausiliarie
+  updateExtras();
 })();

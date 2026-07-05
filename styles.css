@@ -197,6 +197,18 @@ body {
 .quota-field input::-webkit-inner-spin-button,
 .quota-field input::-webkit-outer-spin-button { -webkit-appearance: none; }
 
+.presets { display: flex; gap: 6px; }
+.presets button {
+  flex: 1;
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  color: var(--muted); background: var(--bg);
+  border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 9px 0; cursor: pointer;
+  transition: border-color var(--trans), color var(--trans), background var(--trans);
+}
+.presets button:hover { border-color: var(--accent); color: var(--accent); }
+.presets button.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
 @media (max-width: 520px) {
   .card { padding: 24px 16px 20px; }
   .calc-row { grid-template-columns: 1fr; border-radius: 12px; }
