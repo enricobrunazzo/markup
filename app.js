@@ -9,9 +9,35 @@
   const hint      = document.getElementById('hint');
   const hintQuota = document.getElementById('hintQuota');
 
+  // Interpreta un numero scritto in vari formati (it-IT, en-US, misti).
+  // Gestisce correttamente i separatori delle migliaia, che prima venivano
+  // interpretati come decimali (es. "1.300,00" -> 1.3 invece di 1300).
   function parse(str) {
-    if (!str || str.trim() === '') return NaN;
-    return parseFloat(str.trim().replace(',', '.'));
+    if (str == null) return NaN;
+    let s = String(str).trim();
+    if (s === '') return NaN;
+    // tiene solo cifre, separatori e segno meno
+    s = s.replace(/[^\d.,-]/g, '');
+    if (s === '' || s === '-') return NaN;
+
+    const lastComma = s.lastIndexOf(',');
+    const lastDot   = s.lastIndexOf('.');
+
+    if (lastComma > -1 && lastDot > -1) {
+      // presenti entrambi: l'ultimo è il separatore decimale, l'altro le migliaia
+      if (lastComma > lastDot) {
+        s = s.replace(/\./g, '').replace(',', '.'); // it-IT: 1.300,50
+      } else {
+        s = s.replace(/,/g, '');                    // en-US: 1,300.50
+      }
+    } else if (lastComma > -1) {
+      // solo virgola: separatore decimale (it-IT)
+      s = s.replace(',', '.');
+    }
+    // solo punto (o nessun separatore): lasciato com'è, il punto è decimale
+
+    const n = parseFloat(s);
+    return isFinite(n) ? n : NaN;
   }
 
   function fmt(n, dec = 2) {
@@ -51,6 +77,10 @@
     hint.textContent = 'Su €' + fmt(prezzo) + ' di vendita guadagni €' + fmt(guadagno) + ' (' + fmt(margine, 1) + '% di margine).';
   }
 
+  // Ultimo campo riempito automaticamente dal calcolo: serve per poterlo
+  // ripulire quando i dati non bastano più a calcolarlo.
+  let computedEl = null;
+
   // Calcola il terzo campo dato quale campo sta modificando l'utente (sourceId)
   // Non tocca mai il campo sorgente, aggiorna gli altri due o solo quello mancante
   function calc(sourceId) {
@@ -63,9 +93,10 @@
 
     // costo o markup modificati -> calcola prezzo
     if (sourceId === 'costo' || sourceId === 'markup') {
-      if (hasC && hasM) {
+      if (hasC && hasM && (1 + M / 100) > 0) {
         const np = C * (1 + M / 100);
         prezzoEl.value = fmt(np);
+        computedEl = prezzoEl;
         updateBadges(C, M, np);
         return;
       }
@@ -76,17 +107,25 @@
       if (hasC && hasP) {
         const nm = ((P - C) / C) * 100;
         markupEl.value = fmt(nm);
+        computedEl = markupEl;
         updateBadges(C, nm, P);
         return;
       }
-      if (hasM && hasP) {
+      if (hasM && hasP && (1 + M / 100) > 0) {
         const nc = P / (1 + M / 100);
         costoEl.value = fmt(nc);
+        computedEl = costoEl;
         updateBadges(nc, M, P);
         return;
       }
     }
 
+    // Dati insufficienti: ripulisce il campo calcolato in precedenza
+    // (che altrimenti mostrerebbe un risultato ormai non valido).
+    if (computedEl && computedEl.id !== sourceId) {
+      computedEl.value = '';
+    }
+    computedEl = null;
     hideBadges();
   }
 
