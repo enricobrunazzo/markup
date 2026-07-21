@@ -1,0 +1,20 @@
+{
+  "name": "Markup Calculator",
+  "short_name": "Markup",
+  "description": "Calcolatore di markup, margine, IVA, sconti e arrotondamenti prezzi.",
+  "lang": "it",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f4f0",
+  "theme_color": "#01696f",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}

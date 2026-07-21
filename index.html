@@ -2,8 +2,19 @@
 <html lang="it" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Calcolatore di markup e prezzi: costo, ricarico, margine, IVA, sconti e arrotondamenti in un unico strumento." />
   <title>Markup Calculator</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Markup" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -19,6 +30,18 @@
     <div class="card">
       <div class="card-header">
         <p class="card-title">Calcolatore Markup</p>
+        <div class="card-actions">
+          <button type="button" class="icon-btn" id="btnCopy" aria-label="Copia riepilogo" title="Copia riepilogo">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+          <button type="button" class="icon-btn" id="btnReset" aria-label="Azzera tutto" title="Azzera tutto">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8"/><path d="M3 3v5h5"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="calc-row">
@@ -38,6 +61,16 @@
           <label for="prezzo">Prezzo</label>
           <input type="text" inputmode="decimal" id="prezzo" placeholder="130" autocomplete="off">
           <span class="unit">€</span>
+        </div>
+      </div>
+
+      <div class="round-row" id="roundRow" hidden>
+        <span class="round-label">Arrotonda a</span>
+        <div class="round-chips">
+          <button type="button" data-round="90">,90</button>
+          <button type="button" data-round="99">,99</button>
+          <button type="button" data-round="50">,50</button>
+          <button type="button" data-round="int">intero</button>
         </div>
       </div>
 
@@ -121,6 +154,8 @@
 
     </div>
   </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="app.js"></script>
 </body>

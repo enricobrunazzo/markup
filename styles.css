@@ -80,29 +80,16 @@ body {
   letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--muted);
 }
-
-.login-card { text-align: center; padding: 48px 32px; }
-.login-card .card-title { margin-bottom: 28px; font-size: 15px; }
-.login-btn {
-  display: inline-flex; align-items: center; gap: 10px;
-  padding: 13px 28px;
-  background: var(--surface); border: 1.5px solid var(--border);
-  border-radius: 10px;
-  font-family: var(--font); font-size: 14px; font-weight: 600;
-  color: var(--text); cursor: pointer;
-  box-shadow: var(--shadow);
-  transition: box-shadow var(--trans), border-color var(--trans), background var(--trans);
+.card-actions { display: flex; gap: 6px; }
+.icon-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer;
+  transition: color var(--trans), border-color var(--trans), background var(--trans);
 }
-.login-btn:hover { border-color: var(--accent); box-shadow: 0 4px 20px rgba(0,0,0,0.10); }
-
-.logout-btn {
-  font-family: var(--font); font-size: 12px; font-weight: 600;
-  color: var(--muted); background: transparent;
-  border: 1px solid var(--border); border-radius: 6px;
-  padding: 5px 10px; cursor: pointer;
-  transition: color var(--trans), border-color var(--trans);
-}
-.logout-btn:hover { color: var(--red); border-color: var(--red); }
+.icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
+.icon-btn:active { transform: scale(0.94); }
 
 .calc-row {
   display: grid;
@@ -154,6 +141,27 @@ body {
 .field.markup-field input { color: var(--accent); }
 .field.markup-field label { color: var(--accent); opacity: 0.75; }
 .field.markup-field .unit { color: var(--accent); opacity: 0.55; }
+
+.round-row {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 14px; flex-wrap: wrap;
+}
+.round-label {
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--muted);
+}
+.round-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.round-chips button {
+  font-family: var(--font); font-size: 12.5px; font-weight: 600;
+  color: var(--muted); background: var(--bg);
+  border: 1.5px solid var(--border); border-radius: 999px;
+  padding: 5px 13px; cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--trans), color var(--trans), background var(--trans);
+}
+.round-chips button:hover { border-color: var(--accent); color: var(--accent); }
+.round-chips button:active { transform: scale(0.95); }
 
 .results-row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
 .badge {
@@ -208,6 +216,19 @@ body {
 }
 .presets button:hover { border-color: var(--accent); color: var(--accent); }
 .presets button.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+.toast {
+  position: fixed; left: 50%; bottom: 24px;
+  transform: translate(-50%, 12px);
+  background: var(--text); color: var(--surface);
+  font-size: 13px; font-weight: 600;
+  padding: 10px 18px; border-radius: 999px;
+  box-shadow: var(--shadow);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--trans), transform var(--trans);
+  z-index: 20;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 @media (max-width: 520px) {
   .card { padding: 24px 16px 20px; }
