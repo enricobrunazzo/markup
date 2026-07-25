@@ -1,5 +1,5 @@
 // Service worker: cache-first per funzionamento offline e installazione PWA.
-const CACHE = 'markup-calc-v1';
+const CACHE = 'markup-calc-v2';
 const ASSETS = [
   './',
   './index.html',
